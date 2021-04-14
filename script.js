@@ -1,6 +1,6 @@
 const canvas = document.getElementById('canvas');
-const leftEdge = canvas.offsetLeft + canvas.clientLeft;
-const topEdge = canvas.offsetTop + canvas.clientTop;
+let leftEdge = canvas.offsetLeft + canvas.clientLeft;
+let topEdge = canvas.offsetTop + canvas.clientTop;
 const context = canvas.getContext('2d');
 let lines = drawn = horizontalBoxLines = verticalBoxLines = completedBoxesArray = [];
 let drawnBoxes = {};
@@ -9,7 +9,7 @@ let completedBoxes = {
     "Player 2": []
 };
 const buffer = 5;
-let winCond = 0;
+let winCond = totalBoxes = 0;
 
 const player1 = {
     name: 'Player 1',
@@ -24,6 +24,11 @@ const player2 = {
 let currentPlayer = player1;
 
 canvas.addEventListener('click', takeTurn, false);
+
+window.addEventListener('resize', function() {
+    leftEdge = canvas.offsetLeft + canvas.clientLeft;
+    topEdge = canvas.offsetTop + canvas.clientTop;
+})
 
 // click event that draws edges for a player, triggered when a player clicks on an edge
 function takeTurn(event) {
@@ -109,12 +114,17 @@ function takeTurn(event) {
             // when completing a box, check if the win condition has been met
             // debugger
             if(completedBox) {
+                context.font = '50px verdana';
+                context.textAlign = "center";
                 if(completedBoxes[currentPlayer.name].length >= winCond) {
                     context.fillStyle = currentPlayer.color;
-                    context.font = '50px verdana';
-                    context.fillText(`${currentPlayer.name} has Won!`, 95, 55)
+                    context.fillText(`${currentPlayer.name} has Won!`, canvas.width / 2, 70)
                     canvas.removeEventListener('click', takeTurn);
-                }
+                } else if (completedBoxes["Player 1"].length + completedBoxes["Player 2"].length === totalBoxes) {
+                    // tie!
+                    context.fillStyle = 'grey';
+                    context.fillText(`It's a tie!`, canvas.width / 2, 70)
+                } 
             } else {
                 // swap player if box not completed
                 currentPlayer = currentPlayer === player1 ? player2 : player1;
@@ -130,6 +140,7 @@ function drawGrid() {
     let size = parseInt(document.getElementById('gridSize').value);
     // win condition - minimum number of boxes required is 1 more than half the grid size
     winCond = Math.floor(((size - 1) * (size - 1)) / 2 + 1);
+    totalBoxes = (size - 1) * (size - 1);
     size += 1;
     let box = [];
     let prevBox = 0;
@@ -169,10 +180,9 @@ function drawGrid() {
                 box = [prevBox, prevBox];
                 prevBox++;
             } else if(x === size - 1) {
-                box = [prevBox  - ((size - 1) / 2) - 1, prevBox - ((size - 1) / 2) - 1];
-                prevBox++;
+                box = [prevBox - (x - y), prevBox - (x - y)];
             } else {
-                box = [prevBox - ((size - 1) / 2) - 1, prevBox];
+                box = [prevBox - (size - 2), prevBox];
                 prevBox++;
             }
             lines.push({
@@ -211,6 +221,7 @@ function clearCanvas() {
     drawnBoxes = {};
     completedBoxesArray = [];
     winCond = 0;
+    totalBoxes = 0;
     canvas.addEventListener('click', takeTurn);
 }
 
