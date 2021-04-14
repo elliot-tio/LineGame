@@ -25,6 +25,7 @@ let currentPlayer = player1;
 
 canvas.addEventListener('click', takeTurn, false);
 
+// recalculate click points when resizing window
 window.addEventListener('resize', function() {
     leftEdge = canvas.offsetLeft + canvas.clientLeft;
     topEdge = canvas.offsetTop + canvas.clientTop;
@@ -58,7 +59,7 @@ function takeTurn(event) {
             // add line to drawn array so that the line won't be drawn over again
             drawn.push(line);
 
-            // new idea - check each drawn line, create array of boxes that are created by lines, fill in boxes
+            // check each drawn line, create array of boxes that are created by lines, fill in boxes
             drawn.forEach(line => {
                 line.box.forEach(boxNum => {
                     if(boxNum in drawnBoxes) {
@@ -77,6 +78,7 @@ function takeTurn(event) {
             for(const boxNum in drawnBoxes) {
                 // found a drawn box that has 4 edges that hasn't already been claimed
                 if(drawnBoxes[boxNum].length === 4 && !completedBoxesArray.includes(boxNum)) {
+                    // push to completed boxes so it won't be considered next time
                     completedBoxesArray.push(boxNum);
                     // filter out lines that could possibly make a box with drawn line
                     horizontalBoxLines = drawnBoxes[boxNum].filter(hLine => hLine.type === 'horizontal' && Math.abs(hLine.x - line.x) <= 1 && Math.abs(hLine.y - line.y) <= 1);
@@ -84,16 +86,14 @@ function takeTurn(event) {
 
                     if(horizontalBoxLines.length >= 2 && verticalBoxLines.length >= 2) {
                         // we've found at least 4 edges that make a box - fill in the box with the color of the player that completed it
-                        // one box completed
                         if(line.type === 'horizontal') {
                             boxHeight = verticalBoxLines[0].height;
                             boxWidth = line.width;
                             // get minimum values of left/top from vertical lines so we know where to fill the box from
                             boxLeft = verticalBoxLines.reduce((prev, curr) => prev.left < curr.left ? prev : curr).left;
                             boxTop = verticalBoxLines.reduce((prev, curr) => prev.top < curr.top ? prev : curr ).top;
-                            // todo: check if box was already filled
                             context.fillRect(boxLeft + buffer + 5, boxTop, boxWidth, boxHeight);
-                            // push values to a boxes array under the player name, to check for win condition
+                            // give box to current player
                             completedBoxes[currentPlayer.name].push(boxNum)
                         } else if (line.type === 'vertical') {
                             boxHeight = line.height;
@@ -101,9 +101,8 @@ function takeTurn(event) {
                             // get minimum values of left/top from horizontal lines so we know where to fill the box from
                             boxLeft = horizontalBoxLines.reduce((prev, curr) => prev.left < curr.left ? prev : curr).left;
                             boxTop = horizontalBoxLines.reduce((prev, curr) => prev.top < curr.top ? prev : curr).top;
-                            // todo: check if box was already filled
                             context.fillRect(boxLeft, boxTop + buffer + 5, boxWidth, boxHeight);
-                            // push values to a boxes array under the player name, to check for win condition
+                            // give box to current player
                             completedBoxes[currentPlayer.name].push(boxNum)
                         }
                     }
@@ -111,8 +110,7 @@ function takeTurn(event) {
                 }
             }
                 
-            // when completing a box, check if the win condition has been met
-            // debugger
+            // when completing a box, check if the win condition has been met, or if there was a tie
             if(completedBox) {
                 context.font = '50px verdana';
                 context.textAlign = "center";
@@ -206,7 +204,7 @@ function drawGrid() {
     }
 }
 
-// clear canvas
+// clear canvas & reset game
 function clearCanvas() {
     context.clearRect(0, 0, canvas.width, canvas.height);
     lines = [];
